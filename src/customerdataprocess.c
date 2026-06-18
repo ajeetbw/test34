@@ -35,7 +35,7 @@ void *cdr_customer_data_process(void *cargs)
 
 			n++;
         	strcpy(CS[n-1].msisdn, tokens[0]);
-      		strcpy(CS[n-1].op_brand_name, tokens[1]);
+      	    strcpy(CS[n-1].op_brand_name, tokens[1]);
         	strcpy(CS[n-1].op_mmc, tokens[2]);
         	strcpy(CS[n-1].call_type, tokens[3]);
         	strcpy(CS[n-1].duration, tokens[4]);
@@ -88,7 +88,7 @@ void *cdr_operator_data_process(void *oargs)
 			}
 
 			in++;
-		strcpy(us[in-1].msisdn, tokens[0]);
+			strcpy(us[in-1].msisdn, tokens[0]);
       	   	strcpy(us[in-1].op_brand_name, tokens[1]);
         	strcpy(us[in-1].op_mmc, tokens[2]);
         	strcpy(us[in-1].call_type, tokens[3]);
@@ -272,12 +272,9 @@ void cdr_data_process(struct user *CS,IP *IOS)
 
 	pthread_t CDthread,IDthread;
 	pthread_create(&CDthread,NULL,cdr_customer_data_process,(void *)CS);
-	
-	pthread_create(&IDthread,NULL,cdr_operator_data_process,(void *)IOS);
-
 	pthread_join(CDthread,NULL);
 	pthread_cancel(CDthread);
-	
+	pthread_create(&IDthread,NULL,cdr_operator_data_process,(void *)IOS);
 	pthread_join(IDthread,NULL);
 	pthread_cancel(IDthread);
 

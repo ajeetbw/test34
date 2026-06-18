@@ -15,7 +15,7 @@ char * cdr_interoperator_billing(IP *IOS, char mmc[])
 
 	bzero(temp_datastorage,MAX_BUFF);                    // Initialize temp_datastorage buffer with zeros  
 
-	while(k<5)
+	while(k<3)
 
 	{
 
@@ -153,7 +153,7 @@ char * cdr_interoperator_billing_file(IP *op)
 
 		strcat(temp_datastorage,"<----------------------------->\n");
 
-		while(z<5)                               
+		while(z<3)                               
 
 		{
 

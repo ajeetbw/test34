@@ -1,61 +1,113 @@
-#include<stdio.h>
-#include<stdlib.h>
-#include<sys/socket.h>
-#include<unistd.h>
-#include<string.h>
-#include<netinet/in.h>
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <unistd.h>
 
-#define PORT 8080
+//MACROS
+#define PORTNO 65534 
 #define MAXBUFF 1024
 
-int main(int argc, char const * argv[]) {
-    int valread, client_fd,fflag=0;
-    struct sockaddr_in serv_addr;
+// Debug levels
+#define DEBUG_LEVEL_FATAL 1
+#define DEBUG_LEVEL_INFO  2
+#define DEBUG_LEVEL_WARNING 3
+#define DEBUG_LEVEL_DEBUG  4
 
-    char buffer[MAXBUFF] = {0};
+// Set the current debug level here
+#define DEBUG_LEVEL DEBUG_LEVEL_DEBUG
 
-    char  msg[MAXBUFF];
+// Debug macros
+#if DEBUG_LEVEL >= DEBUG_LEVEL_ERROR
+#define DEBUG_ERROR(msg) fprintf(stderr, "[ERROR] %s\n", msg)
+#else
+#define DEBUG_ERROR(msg)
+#endif
 
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_port = htons(PORT);
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
+#if DEBUG_LEVEL >= DEBUG_LEVEL_INFO
+#define DEBUG_INFO(msg) fprintf(stderr, "[INFO] %s\n", msg)
+#else
+#define DEBUG_INFO(msg)
+#endif
 
-    if ((client_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0) {
-      printf("\n SOCKET CREATION ERROR \n");
-      return -1;
-    }
+#if DEBUG_LEVEL >= DEBUG_LEVEL_WARNING
+#define DEBUG_WARNING(msg) fprintf(stderr, "[WARNING] %s\n", msg)
+#else
+#define DEBUG_WARNING(msg)
+#endif
 
-    if ((connect(client_fd, (struct sockaddr * ) & serv_addr, sizeof(serv_addr))) < 0) {
-      printf("connection failed \n");
-      return -1;
-    }
-    DEBUG_INFO("\n Client connected to the server \n");
+#if DEBUG_LEVEL >= DEBUG_LEVEL_DEBUG
+#define DEBUG_DEBUG(msg) fprintf(stderr, "[DEBUG] %s\n", msg)
+#else
+#define DEBUG_DEBUG(msg)
+#endif
 
-   while(1){
-       system("clear");
+//Create the client for CDR application
+int main()
+{
+	int sfd = 0, ret_Value=0;
+
+	int fflag=0;
+	
+
+	struct sockaddr_in serv_address;
+
+	char msg[MAXBUFF] = {0,};
+
+	sfd = socket(AF_INET,SOCK_STREAM,0);
+
+	if(sfd < 0)
+	{
+		perror("socket()");
+		exit(EXIT_FAILURE);
+	}
+	DEBUG_INFO("\nSocket created\n");
+
+	memset(&serv_address,'\0',sizeof(serv_address));
+
+	serv_address.sin_family = AF_INET;
+	serv_address.sin_port = htons(PORTNO);
+	serv_address.sin_addr.s_addr = inet_addr("127.0.0.1");
+
+	ret_Value = connect(sfd,(struct sockaddr *)&serv_address, sizeof(serv_address));
+
+	if(ret_Value < 0)
+	{
+		perror("connect()");
+		exit(EXIT_FAILURE);
+	}
+
+	DEBUG_INFO("\nClient connected to the server\n");
+
+	while(1)
+	{
+		system("clear");
 		bzero(msg,MAXBUFF);
 		printf("------------------> CALL DATA RECORD <------------------\n");
 		printf("\n\n1. Signup\n2. Login\n3. exit\nchoice: ");
 
 		bzero(msg,MAXBUFF);
 		scanf("%s",msg);
-		if(atoi(msg)==1)      // signup section
+		if(atoi(msg)==1)
 		{
-			write(client_fd,msg,strlen(msg));
+			write(sfd,msg,strlen(msg));
 			bzero(msg,MAXBUFF);
-			read(client_fd,msg,MAXBUFF);     //enter username
+			read(sfd,msg,MAXBUFF);
 			printf("\n\n%s ",msg);
 			bzero(msg,MAXBUFF);
 			scanf("%s",msg);
-			write(client_fd,msg,strlen(msg));
+			write(sfd,msg,strlen(msg));
 			bzero(msg,MAXBUFF);
-			read(client_fd,msg,MAXBUFF);      //Enter password
+			read(sfd,msg,MAXBUFF);
 			printf("\n%s ",msg);
 			bzero(msg,MAXBUFF);
 			scanf("%s",msg);
-			write(client_fd,msg,strlen(msg));
+			write(sfd,msg,strlen(msg));
 			bzero(msg,MAXBUFF);
-			read(client_fd,msg,MAXBUFF);     //success or fail
+			read(sfd,msg,MAXBUFF);
 			if(strcmp(msg,"1")==0)
 			{
 				DEBUG_INFO("\n\nSign up successful!\n\n");
@@ -67,23 +119,23 @@ int main(int argc, char const * argv[]) {
 			}
 			sleep(3);
 		}
-		else if(atoi(msg)==2)   //login section
+		else if(atoi(msg)==2)
 		{
-			write(client_fd,msg,strlen(msg));
+			write(sfd,msg,strlen(msg));
 			bzero(msg,MAXBUFF);
-			read(client_fd,msg,MAXBUFF);  // enter username
+			read(sfd,msg,MAXBUFF);
 			printf("\n\n%s ",msg);
 			bzero(msg,MAXBUFF);
 			scanf("%s",msg);
-			write(client_fd,msg,strlen(msg));
+			write(sfd,msg,strlen(msg));
 			bzero(msg,MAXBUFF);
-			read(client_fd,msg,MAXBUFF);     //enter password
+			read(sfd,msg,MAXBUFF);
 			printf("\n%s ",msg);
 			bzero(msg,MAXBUFF);
 			scanf("%s",msg);
-			write(client_fd,msg,strlen(msg));
+			write(sfd,msg,strlen(msg));
 			bzero(msg,MAXBUFF);
-			read(client_fd,msg,MAXBUFF);     // success  or  fail
+			read(sfd,msg,MAXBUFF);
 			if(atoi(msg)==1)
 			{
 				DEBUG_INFO("\n\nLog in successful!\n\n");
@@ -97,11 +149,11 @@ int main(int argc, char const * argv[]) {
 					scanf("%s",msg);
 					if(atoi(msg)==1 || atoi(msg)==2)
 					{
-						if(atoi(msg)==1)    // data processing
+						if(atoi(msg)==1)
 						{
 						
-							write(client_fd,msg,strlen(msg));
-							read(client_fd,msg,MAXBUFF);  //data processing status
+							write(sfd,msg,strlen(msg));
+							read(sfd,msg,MAXBUFF);
 							if(atoi(msg)==1)
 							{
 								fflag=1;
@@ -120,7 +172,7 @@ int main(int argc, char const * argv[]) {
 								sleep(3);
 							}
 						}
-						else       //Search/print section
+						else
 						{
 							if(fflag==0)
 							{
@@ -129,32 +181,32 @@ int main(int argc, char const * argv[]) {
 							}
 							else
 							{
-								write(client_fd,msg,strlen(msg));
+								write(sfd,msg,strlen(msg));
 								bzero(msg,MAXBUFF);
-								read(client_fd,msg,MAXBUFF);  //Customer or inter
+								read(sfd,msg,MAXBUFF);
 								printf("%s",msg);
 								bzero(msg,MAXBUFF);
 								scanf("%s",msg);
-								if(atoi(msg)==1)    //customer section
+								if(atoi(msg)==1)
 								{
-									write(client_fd,msg,strlen(msg));
+									write(sfd,msg,strlen(msg));
 									bzero(msg,MAXBUFF);
-									read(client_fd,msg,MAXBUFF);    // customer billing options
+									read(sfd,msg,MAXBUFF);
 									system("clear");
 									printf("%s",msg);
 									bzero(msg,MAXBUFF);
 									scanf("%s",msg);
-									write(client_fd,msg,strlen(msg));
-									if(atoi(msg)==1)  //display section
+									write(sfd,msg,strlen(msg));
+									if(atoi(msg)==1)
 									{
 										bzero(msg,MAXBUFF);
-										read(client_fd,msg,MAXBUFF); // enter msisdn
+										read(sfd,msg,MAXBUFF);
 										printf("%s ",msg);
 										bzero(msg,MAXBUFF);
 										scanf("%s",msg);
-										write(client_fd,msg,strlen(msg));
+										write(sfd,msg,strlen(msg));
 										bzero(msg,MAXBUFF);
-										read(client_fd,msg,MAXBUFF);   // output of customerbilling function
+										read(sfd,msg,MAXBUFF);
 										if(strcmp(msg,"User not exist!")==0)
 										{
 											DEBUG_ERROR("\n\nUser not exist!\n\n");
@@ -168,16 +220,16 @@ int main(int argc, char const * argv[]) {
 											sleep(10);
 										}
 									}	
-									else if(atoi(msg)==2)   //download section
+									else if(atoi(msg)==2)
 									{
 										bzero(msg,MAXBUFF);
-										read(client_fd,msg,MAXBUFF);   //enter MSISDN
+										read(sfd,msg,MAXBUFF);
 										printf("%s ",msg);
 										bzero(msg,MAXBUFF);
 										scanf("%s",msg);
-										write(client_fd,msg,strlen(msg));
+										write(sfd,msg,strlen(msg));
 										bzero(msg,MAXBUFF);
-										read(client_fd,msg,MAXBUFF);   // output of customerbillingfile function
+										read(sfd,msg,MAXBUFF);
 										if(strcmp(msg,"failed")==0)
 										{
 											printf("\n\nWrong MSISDN.\n\n");
@@ -196,26 +248,27 @@ int main(int argc, char const * argv[]) {
 										sleep(3);
 									}
 								}
-								else if(atoi(msg)==2)   //inter section
+								else if(atoi(msg)==2)
 								{
-									write(client_fd,msg,strlen(msg));
+
+									write(sfd,msg,strlen(msg));
 									bzero(msg,MAXBUFF);
-									read(client_fd,msg,MAXBUFF);   // inter billing options
+									read(sfd,msg,MAXBUFF);
 									system("clear");
 									printf("%s",msg);
 									bzero(msg,MAXBUFF);
 									scanf("%s",msg);
-									write(client_fd,msg,strlen(msg));
-									if(atoi(msg)==1)  //display section
+									write(sfd,msg,strlen(msg));
+									if(atoi(msg)==1)
 									{
 										bzero(msg,MAXBUFF);
-										read(client_fd,msg,MAXBUFF);      //Enter operator code
+										read(sfd,msg,MAXBUFF);
 										printf("%s ",msg);
 										bzero(msg,MAXBUFF);
 										scanf("%s",msg);
-										write(client_fd,msg,strlen(msg));
+										write(sfd,msg,strlen(msg));
 										bzero(msg,MAXBUFF);
-										read(client_fd,msg,MAXBUFF);     // output of interoperatorbilling function
+										read(sfd,msg,MAXBUFF);
 										if(strcmp(msg,"Inter operator not found!")==0)
 										{
 											printf("\n\nInter operator not Found!\n\n");
@@ -229,10 +282,10 @@ int main(int argc, char const * argv[]) {
 											sleep(10);
 										}
 									}
-									else if(atoi(msg)==2)  //download section
+									else if(atoi(msg)==2)
 									{
 										bzero(msg,MAXBUFF);
-										read(client_fd,msg,MAXBUFF);    // output of interoperatorbillingfile function
+										read(sfd,msg,MAXBUFF);
 										if(strcmp(msg,"no")==0)
 
 										{
@@ -261,9 +314,9 @@ int main(int argc, char const * argv[]) {
 							}
 						}
 					}
-					else if(atoi(msg)==3)   // logout section
+					else if(atoi(msg)==3)
 					{
-						write(client_fd,msg,MAXBUFF);
+						write(sfd,msg,MAXBUFF);
 						DEBUG_INFO("\n\nLog out successful!\n\n");
 						bzero(msg,MAXBUFF);
 						sleep(3);
@@ -287,13 +340,15 @@ int main(int argc, char const * argv[]) {
 				system("clear");
 			}
 		}
-		else if(atoi(msg)==3)    //exit section
+		else if(atoi(msg)==3)
 		{
-			write(client_fd,msg,strlen(msg));
+			write(sfd,msg,strlen(msg));
 			printf("\n\nThankyou!\n\n");
 			system("clear");
+			close(sfd);
 			break;
 		}
+		
 		else
 		{
 			bzero(msg,MAXBUFF);
@@ -301,8 +356,8 @@ int main(int argc, char const * argv[]) {
 			sleep(3);
 			system("clear");
 		}
-   }
+	}	
 
-      close(client_fd);
-      return 0;
-    }
+	return 0;
+}
+
